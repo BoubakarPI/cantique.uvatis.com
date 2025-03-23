@@ -8,5 +8,15 @@
 */
 
 import router from '@adonisjs/core/services/router'
-router.on('/').renderInertia('home')
+import { middleware } from '#start/kernel'
+const LoginUserController = () => import('#data/controllers/login_controller')
 
+router
+  .group(() => {
+    router.get('login', [LoginUserController, 'show']).as('login.show')
+    router.post('login', [LoginUserController, 'execute']).as('login.execute')
+  })
+  .as('auth')
+  .prefix('auth')
+
+router.on('/').renderInertia('home').as('index').use(middleware.auth())

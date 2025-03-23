@@ -9,7 +9,7 @@ export class LoginUserUseCase {
     return password
   }
   handle(payload: UserLoginRequestDto) {
-    return this.userRepository.login({
+    return this.userRepository.loginUser({
       email: payload.email,
       password: this.hashPwd(payload.password),
     })

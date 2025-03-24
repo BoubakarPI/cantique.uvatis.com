@@ -10,7 +10,7 @@
           <div class="flex items-center">
             <button
               @click="logout"
-              class="ml-4 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+              class="ml-4 bg-primary px-4 py-2 text-sm text-white hover:bg-gray-100 rounded-md"
             >
               Déconnexion
             </button>
@@ -134,7 +134,7 @@
 
         <!-- Recent uploads -->
         <div v-if="recentUploads.length > 0" class="mt-8">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Fichiers récents</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Tous les Fichiers </h3>
           <ul class="divide-y divide-gray-200">
             <li
               v-for="(file, index) in recentUploads"
@@ -233,24 +233,32 @@ const uploadFile = async (file: File): Promise<void> => {
     }
   }, 300)
 
+  const formData = new FormData()
+  formData.append('audio', file)
+
   try {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
 
-    uploadProgress.value = 100
-    uploadedFileUrl.value = `https://example.com/audio/${file.name.replace(/\s+/g, '-')}`
+    if (!response.ok) {
+      throw new Error('Upload failed')
+    }
 
+    const data = await response.json()
+    uploadedFileUrl.value = data.url
     recentUploads.value.unshift({
       name: file.name,
       url: uploadedFileUrl.value,
       date: new Date().toISOString(),
     })
-  } catch (err) {
-    console.error('Upload failed:', err)
-    alert('Une erreur est survenue lors du téléchargement. Veuillez réessayer.')
-  } finally {
-    clearInterval(progressInterval)
-    isUploading.value = false
+
     success('Audio uploadé avec succès', { title: 'Félicitations', duration: 3000 })
+  } catch (error) {
+    console.error('Upload failed:', error)
+  } finally {
+    isUploading.value = false
   }
 }
 
@@ -281,11 +289,17 @@ const logout = (): void => {
   }, 3000)
 }
 
+const fetchFiles = async () => {
+  try {
+    const response = await fetch('/api/files')
+    recentUploads.value = await response.json()
+  } catch (error) {
+    console.error('Erreur lors de la récupération des fichiers :', error)
+  }
+}
+
 onMounted(() => {
-  recentUploads.value = [
-    { name: 'interview.mp3', url: 'https://example.com/audio/interview.mp3', date: '2023-05-15T10:30:00Z' },
-    { name: 'podcast-episode-1.wav', url: 'https://example.com/audio/podcast-episode-1.wav', date: '2023-05-10T14:20:00Z' },
-  ]
+  fetchFiles()
 })
 </script>
 

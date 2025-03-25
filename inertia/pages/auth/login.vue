@@ -33,7 +33,6 @@ import InputLabel from "~/components/auth/InputLabel.vue";
 import ButtonBase from "~/components/auth/ButtonBase.vue";
 import { usePageErrors } from "~/composables/use_page_errors"
 import { useToast } from "~/composables/use_toast";
-import ToastContainer from "~/components/ui/ToastContainer.vue";
 const { success } = useToast()
 
 const email = ref('')

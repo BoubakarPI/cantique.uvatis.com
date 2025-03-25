@@ -1,0 +1,17 @@
+services:
+  app:
+     # Utilise le tag spécifique ou latest par défaut
+    image: uvatis/cantique:${TAG:-latest}
+    container_name: cantique-fullstack
+    ports:
+      - "3580:3333"
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+    # Libre à vous d'ajouter votre service Postgresql à ce niveau

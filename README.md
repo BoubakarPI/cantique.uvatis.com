@@ -58,7 +58,7 @@ L'architecture suit un modèle **hexagonal adapté**, où :
 
 ---
 
-## 🚀 Installation et démarrage
+## Installation et démarrage
 
 ### 1️⃣ Prérequis
 - Node.js 20+
@@ -121,7 +121,7 @@ npm run dev
 
 ## 🏗️ Déploiement
 
-## 🚀 Flux de déploiement
+## Flux de déploiement
 
 Ce projet utilise un script Makefile avec Docker Compose pour automatiser le déploiement de l'application sur un mini VPS (On ne va pas se casser la tête avec des instances pour une telle petite app).
 

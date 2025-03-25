@@ -22,7 +22,7 @@ Ce système d'administration est destiné à l'application mobile développée p
 ## 📂 Structure du projet
 
 ```plaintext
-boubakarpi-cantique.uvatis.com/
+cantique.uvatis.com/
 ├── ace.js
 ├── adonisrc.ts
 ├── package.json
@@ -68,7 +68,7 @@ L'architecture suit un modèle **hexagonal adapté**, où :
 ### 2️⃣ Installation
 
 ```bash
-git clone https://github.com/ton_repo/cantique.uvatis.com.git
+git clone https://github.com/boubakarpi/cantique.uvatis.com.git
 cd cantique.uvatis.com
 cp .env.example .env
 npm install
@@ -105,17 +105,16 @@ npm run dev
 ## 📡 API Routes principales
 
 ### 🔐 Authentification
-| Méthode | Route             | Description                 |
-|---------|------------------|-----------------------------|
-| POST    | `/login`         | Connexion de l'utilisateur |
-| POST    | `/register`      | Inscription                |
-| DELETE  | `/logout`        | Déconnexion                |
+### Routes
 
-### 📁 Gestion des fichiers
-| Méthode | Route              | Description                       |
-|---------|--------------------|-----------------------------------|
-| GET     | `/files`           | Liste des fichiers disponibles   |
-| POST    | `/upload`          | Upload d'un fichier audio        |
+| **METHOD** | **ROUTE**                  | **DESCRIPTION**                                             | **MIDDLEWARE** |
+|------------|----------------------------|-------------------------------------------------------------|----------------|
+| GET        | /auth/login                | Affiche la page de connexion de l'utilisateur               |                |
+| POST       | /auth/login                | Traite la soumission du formulaire de connexion             |                |
+| DELETE     | /auth/logout               | Déconnecte l'utilisateur en supprimant sa session           | auth           |
+| GET        | /                          | Page d'accueil ou page d'index                               | auth           |
+| POST       | /api/upload                | Gère l'upload de fichiers                                    | auth           |
+| GET        | /api/files                 | Récupère la liste des fichiers disponibles sur le serveur   | auth           |
 
 ---
 

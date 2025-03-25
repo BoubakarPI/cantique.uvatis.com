@@ -1,20 +1,17 @@
-import type { HttpContext } from '@adonisjs/core/http'
-import { RegisterUserValidator } from '#auth/data/validators/register_user_validator'
-import { RegisterUserUseCase } from '#auth/domain/usercases/register_user_usecase'
 import { inject } from '@adonisjs/core'
+import { CreateUserUseCase } from '#domain/usecases/create_user_usecase'
+import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()
 export default class RegisterUserController {
-  constructor(private userUseCase: RegisterUserUseCase) {}
-  async execute({ request, response, auth }: HttpContext) {
-    const payload = await request.validateUsing(RegisterUserValidator)
-
-    const user = await this.userUseCase.handle(payload)
-    await auth.use('web').login(user)
-    await this.sendActivateEmailOtpUseCase.handle(user)
-    return response.redirect().toRoute('activate.get')
-  }
-  async show({ inertia, request }: HttpContext) {
-    return inertia.render('auth/register')
+  constructor(private userUseCase: CreateUserUseCase) {}
+  async handle({ response }: HttpContext) {
+    return response.json(
+      await this.userUseCase.handle({
+        fullName: 'Faker',
+        email: 'email',
+        password: 'password',
+      })
+    )
   }
 }

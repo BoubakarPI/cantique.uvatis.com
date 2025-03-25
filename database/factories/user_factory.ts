@@ -1,12 +1,14 @@
 import factory from '@adonisjs/lucid/factories'
-import User from '#models/user'
+import User from '#data/repositories/lucid/models/user'
+import { randomUUID } from 'node:crypto'
 
 export const UserFactory = factory
   .define(User, async ({ faker }) => {
     return {
+      id: randomUUID(),
       fullName: faker.person.fullName(),
-      email: faker.internet.email(),
-      password: '@@8956236QS',
+      email: '',
+      password: '',
     }
   })
   .build()

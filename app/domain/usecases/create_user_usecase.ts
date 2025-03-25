@@ -5,7 +5,7 @@ import { inject } from '@adonisjs/core'
 @inject()
 export class CreateUserUseCase {
   constructor(private userRepository: UserRepository) {}
-  generateId() {
+  generateId(): string {
     return crypto.randomUUID()
   }
   hashPwd(password: string) {

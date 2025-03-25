@@ -4,7 +4,7 @@ Ce projet est une petite application qui servirait de back-office développée a
 
 ### Application mobile
 
-Ce système d'administration est destiné à l'application mobile développée par Serge Koalga. Vous pouvez consulter le code source de l'application sur son [GitHub](https://github.com/serge-eric-kalaga).
+Ce système d'administration est destiné à l'application mobile développée par [Serge Eric KALAGA](https://github.com/serge-eric-kalaga).
 
 
 ## 🏗️ Technologies utilisées

@@ -6,12 +6,13 @@ import { UploadFileUseCase } from '#domain/usecases/upload_file_usecase'
 export default class UploadFileController {
   constructor(private uploadFileUseCase: UploadFileUseCase) {}
   async handle(ctx: HttpContext) {
-    const audio = ctx.request.file('audio')
+    const audios = ctx.request.files('audios')
 
-    if (!audio) {
+    if (!audios) {
       return ctx.response.badRequest({ error: 'No file uploaded' })
     }
-    const url = await this.uploadFileUseCase.handle(audio)
-    return ctx.response.json({ url: url })
+    const urls = await this.uploadFileUseCase.handle(audios)
+
+    return ctx.response.json({ urls: urls })
   }
 }

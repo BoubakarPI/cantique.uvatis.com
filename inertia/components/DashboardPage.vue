@@ -40,9 +40,10 @@
             accept="audio/*"
             class="hidden"
             @change="handleFileSelect"
+            multiple
           />
 
-          <div v-if="!isUploading && !uploadedFileUrl">
+          <div v-if="!isUploading && !uploadedFileUrls.length">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="mx-auto h-12 w-12 text-gray-400"
@@ -58,9 +59,9 @@
               />
             </svg>
             <p class="mt-2 text-sm text-gray-600">
-              Glissez et déposez un fichier audio ici, ou cliquez pour sélectionner
+              Glissez et déposez des fichiers audio ici, ou cliquez pour sélectionner
             </p>
-            <p class="mt-1 text-xs text-gray-500">MP3, WAV, OGG, FLAC (max. 20MB)</p>
+            <p class="mt-1 text-xs text-gray-500">MP3, WAV, OGG, FLAC (max. 20MB par fichier)</p>
           </div>
 
           <!-- Loading animation -->
@@ -81,7 +82,7 @@
           </div>
 
           <!-- Success state -->
-          <div v-if="uploadedFileUrl && !isUploading" class="py-4">
+          <div v-if="uploadedFileUrls.length > 0 && !isUploading" class="py-4">
             <div class="flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -98,37 +99,45 @@
                 />
               </svg>
             </div>
-            <p class="mt-2 text-sm text-gray-600">Fichier téléchargé avec succès!</p>
+            <p class="mt-2 text-sm text-gray-600">
+              {{ uploadedFileUrls.length > 1 ? 'Fichiers téléchargés' : 'Fichier téléchargé' }} avec succès!
+            </p>
           </div>
         </div>
 
         <!-- File URL result -->
-        <div v-if="uploadedFileUrl" class="mt-6">
-          <h3 class="text-sm font-medium text-gray-700 mb-2">URL du fichier:</h3>
-          <div class="flex">
-            <input
-              type="text"
-              readonly
-              :value="uploadedFileUrl"
-              class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm"
-            />
-            <button
-              @click="copyToClipboard"
-              class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-md px-4 hover:bg-gray-200 transition-colors"
-            >
-              <span v-if="copied">Copié!</span>
-              <span v-else>Copier</span>
-            </button>
+        <!-- File URLs result -->
+        <div v-if="uploadedFileUrls.length > 0" class="mt-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">
+            {{ uploadedFileUrls.length > 1 ? 'URLs des fichiers:' : 'URL du fichier:' }}
+          </h3>
+
+          <div v-for="(url, index) in uploadedFileUrls" :key="index" class="mb-2">
+            <div class="flex">
+              <input
+                type="text"
+                readonly
+                :value="url"
+                class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm"
+              />
+              <button
+                @click="copyToClipboard(url)"
+                class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-md px-4 hover:bg-gray-200 transition-colors"
+              >
+                <span v-if="copiedStates[url]">Copié!</span>
+                <span v-else>Copier</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Upload new file button -->
-        <div v-if="uploadedFileUrl" class="mt-4">
+        <div v-if="uploadedFileUrls.length > 0" class="mt-4">
           <button
             @click="resetUpload"
             class="text-primary hover:text-primary-dark text-sm font-medium"
           >
-            Télécharger un autre fichier
+            Télécharger d'autres fichiers
           </button>
         </div>
 
@@ -182,8 +191,8 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const isDragging = ref<boolean>(false)
 const isUploading = ref<boolean>(false)
 const uploadProgress = ref<number>(0)
-const uploadedFileUrl = ref<string>('')
-const copied = ref<boolean>(false)
+const uploadedFileUrls = ref<string[]>([]) // Changé pour un tableau
+const copiedStates = ref<{[key: string]: boolean}>({}) // Objet pour suivre l'état de copie de chaque URL
 
 interface UploadItem {
   name: string
@@ -204,8 +213,11 @@ const handleFileDrop = (event: DragEvent): void => {
   isDragging.value = false
 
   const files = event.dataTransfer?.files
-  if (files && files.length > 0 && files[0].type.startsWith('audio/')) {
-    uploadFile(files[0])
+  if (files && files.length > 0) {
+    const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'))
+    if (audioFiles.length > 0) {
+      uploadFiles(audioFiles)
+    }
   }
 }
 
@@ -214,18 +226,26 @@ const handleFileSelect = (event: Event): void => {
   const target = event.target as HTMLInputElement
   const files = target.files
   if (files && files.length > 0) {
-    uploadFile(files[0])
+    const audioFiles = Array.from(files)
+    uploadFiles(audioFiles)
   }
 }
 
-const uploadFile = async (file: File): Promise<void> => {
-  if (file.size > 20 * 1024 * 1024) {
-    alert('Le fichier est trop volumineux. La taille maximale est de 20MB.')
-    return
+const uploadFiles = async (files: File[]): Promise<void> => {
+  // Vérifier la taille de chaque fichier
+  for (const file of files) {
+    if (file.size > 20 * 1024 * 1024) {
+      error(`Le fichier ${file.name} est trop volumineux. La taille maximale est de 20MB.`, {
+        title: 'Erreur',
+        duration: 3000
+      })
+      return
+    }
   }
 
   isUploading.value = true
   uploadProgress.value = 0
+  uploadedFileUrls.value = [] // Réinitialiser les URLs
 
   const progressInterval = setInterval(() => {
     if (uploadProgress.value < 95) {
@@ -234,7 +254,11 @@ const uploadFile = async (file: File): Promise<void> => {
   }, 300)
 
   const formData = new FormData()
-  formData.append('audio', file)
+
+  // Ajouter tous les fichiers au FormData
+  files.forEach(file => {
+    formData.append('audios', file)
+  })
 
   try {
     const response = await fetch('/api/upload', {
@@ -247,36 +271,61 @@ const uploadFile = async (file: File): Promise<void> => {
     }
 
     const data = await response.json()
-    uploadedFileUrl.value = data.url
-    recentUploads.value.unshift({
-      name: file.name,
-      url: uploadedFileUrl.value,
-      date: new Date().toISOString(),
+
+    // Si l'API retourne un tableau d'URLs
+    if (Array.isArray(data.urls)) {
+      uploadedFileUrls.value = data.urls
+      files.forEach((file, index) => {
+        if (index < data.urls.length) {
+          recentUploads.value.unshift({
+            name: file.name,
+            url: data.urls[index],
+            date: new Date().toISOString(),
+          })
+        }
+      })
+
+    } else {
+      // Pour compatibilité avec l'ancien format de réponse
+      uploadedFileUrls.value = [data.url]
+      recentUploads.value.unshift({
+        name: files[0].name,
+        url: data.url,
+        date: new Date().toISOString(),
+      })
+    }
+
+    success(`${files.length > 1 ? files.length + ' fichiers audio' : 'Audio'} uploadé${files.length > 1 ? 's' : ''} avec succès`, {
+      title: 'Félicitations',
+      duration: 3000
     })
 
-    success('Audio uploadé avec succès', { title: 'Félicitations', duration: 3000 })
+    clearInterval(progressInterval)
   } catch (error) {
-    console.error('Upload failed:', error)
+    error('Échec de l\'upload', { title: 'Erreur', duration: 3000 })
   } finally {
     isUploading.value = false
+    uploadProgress.value = 100
   }
 }
 
 // Copier l'URL dans le presse-papier
-const copyToClipboard = (): void => {
+const copyToClipboard = (url: string): void => {
   info('Lien copié avec succès', { title: 'Succès', duration: 3000 })
-  navigator.clipboard.writeText(uploadedFileUrl.value)
-  copied.value = true
+  navigator.clipboard.writeText(url)
+
+  // Mettre à jour l'état de copie pour cet URL
+  copiedStates.value[url] = true
 
   setTimeout(() => {
-    copied.value = false
+    copiedStates.value[url] = false
   }, 2000)
 }
 
 const { info, error, success } = useToast()
 
 const resetUpload = (): void => {
-  uploadedFileUrl.value = ''
+  uploadedFileUrls.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
 

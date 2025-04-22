@@ -5,15 +5,19 @@ import env from '#start/env'
 import { extractUploadItems } from '#data/utils/extract_files'
 
 export class UploadFileToR2Impl implements UploadRepository {
-  async uploadFile(file: any): Promise<string> {
-    const fileName = file.clientName
-    try {
-      await file.moveToDisk(fileName)
-      await drive.use().getUrl(fileName)
-    } catch (e) {
-      console.error('Erreur lors de l’enregistrement du fichier :', e)
+  async uploadFile(files: any[]): Promise<string[]> {
+    let urls: string[] = []
+    for (const file of files) {
+      const fileName = file.clientName
+      try {
+        await file.moveToDisk(fileName)
+        await drive.use().getUrl(fileName)
+        urls.push(`https://cantique-cdn.uvatis.com/${fileName}`)
+      } catch (e) {
+        console.error('Erreur lors de l’enregistrement du fichier :', e)
+      }
     }
-    return `https://cantique-cdn.uvatis.com/${fileName}`
+    return urls
   }
 
   async getFileList(): Promise<GetFileListItemDto[]> {
